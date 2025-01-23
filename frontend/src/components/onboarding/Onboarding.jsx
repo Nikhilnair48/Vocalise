@@ -22,13 +22,20 @@ export const Onboarding = ({ setUserId }) => {
 
   return (
     <div className="onboarding-container">
-      <input
-        type="text"
-        placeholder="Enter your name"
-        value={username}
-        onChange={(e) => setUsername(e.target.value)}
-      />
-      <button onClick={handleJoinChat}>Join Chat</button>
+      <div className="onboarding-content">
+        <h2>Welcome to Vocalise!</h2>
+        <div className="input-group">
+          <input
+            type="text"
+            placeholder="Enter your name"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+          />
+          <button onClick={handleJoinChat} disabled={!username}>
+            Join Chat
+          </button>
+        </div>
+      </div>
     </div>
   );
 };

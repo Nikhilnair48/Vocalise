@@ -1,27 +1,22 @@
 import User from "../models/userModel.js";
 import Message from '../models/messageModel.js';
-import ChatRooms from '../models/chatroomsModel.js';
 
 export async function joinRoom(socket, data) {
-  const { username, room } = data;
-  console.log(username);
+  const { userId, username, room } = data;
   socket.join(room);
 
   try {
-    const existingUser = await User.findOne({ name: username });
-    if (existingUser) {
-      return socket.emit("error", {
-        message: "Username already exists. Please choose another.",
-      });
+    // Store user details in MongoDB only if they are not already present
+    const existingUser = await User.findOne({ userId });
+    if (!existingUser) {
+      await User.create({ userId, name: username, socketId: socket.id, room });
     }
 
-    const user = await User.create({ userId: username, name: username, socketId: socket.id });
     socket.to(room).emit("user_joined", { username });
-
     socket.emit("message", {
       username: "System",
       text: `Welcome to the chat room, ${username}!`,
-      userId: user._id,
+      userId: userId,
     });
   } catch (error) {
     console.error("Error joining room:", error);
@@ -29,31 +24,38 @@ export async function joinRoom(socket, data) {
   }
 }
 
-export async function sendMessage(io, socket, data) {
-    const { room, ...messageData } = data;
-    // Store message in MongoDB
-  
-    // Broadcast message to all users in the room
-    io.to(room).emit("message", messageData);
-};
+export async function leaveRoom(socket, data) {
+  const { userId, room } = data;
+  socket.leave(room);
 
-// Fetch available chat rooms
-export const getChatRooms = async (req, res) => {
   try {
-    const rooms = await ChatRooms.find();
-    res.json(rooms);
-  } catch (error) {
-    res.status(500).json({ message: 'Error fetching chat rooms' });
-  }
-};
+    await User.findOneAndDelete({ userId });
 
-// Fetch messages for a specific room
-export const getMessagesForRoom = async (req, res) => {
-  try {
-    const { roomId } = req.params;
-    const messages = await Message.find({ room: roomId }).sort({ timestamp: 1 });
-    res.json(messages);
+    socket.to(room).emit("message", {
+      type: "system",
+      text: `User has left the room.`,
+      timestamp: new Date(),
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching messages' });
+    console.error("Error leaving room:", error);
   }
-};
+}
+
+export async function sendMessage(io, data) {
+  const { userId, room, text } = data;
+
+  const message = new Message({
+    userId,
+    room,
+    message: text,
+    timestamp: new Date(),
+  });
+
+  try {
+    await message.save();
+    io.to(room).emit("receive_message", { userId, text, timestamp: new Date() });
+  } catch (error) {
+    console.error("Error sending message:", error);
+  }
+}
+

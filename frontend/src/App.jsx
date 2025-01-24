@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Onboarding from "./components/Onboarding";
-import Chatrooms from "./components/Chatrooms";
-import Chatroom from "./components/Chatroom";
+import { Onboarding } from "./components/onboarding/Onboarding";
+import { Chatrooms } from "./components/chatrooms/Chatrooms";
+import { Chatroom } from "./components/chatroom/Chatroom";
 
 function App() {
-  const [userId, setUserId] = useState(null); // User ID state
+  const [userId, setUserId] = useState(null);
 
   return (
     <BrowserRouter>

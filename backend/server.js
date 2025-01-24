@@ -1,23 +1,24 @@
-const express = require("express");
-const mongoose = require("mongoose");
-const dotenv = require("dotenv");
-const cors = require("cors");
+import express from "express";
+import cors from "cors";
+import { config } from "dotenv";
+import connectDB from "./utils/db.js";
+import chatRoutes from "./routes/chatRoutes.js";
+import { initializeSocket } from "./services/socketService.js";
 
-dotenv.config();
-
+config();
 const app = express();
+
+// Middleware
 app.use(cors());
 app.use(express.json());
 
-// Connect to MongoDB
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => console.log("MongoDB connected"))
-  .catch((err) => console.error("DB Connection Error:", err));
+// Connect to DB
+connectDB();
 
-app.get("/", (req, res) => {
-  res.send("Chat app backend running...");
-});
+// Routes
+app.use("/api/chat", chatRoutes);
 
+// Start HTTP and WebSocket Server
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+const server = app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+initializeSocket(server);

@@ -2,12 +2,12 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App'
-import { ChatProvider } from './context/ChatContext'
+import { SocketProvider } from './contexts/SocketContext'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <ChatProvider>
-      <App />
-    </ChatProvider>
+    <SocketProvider>
+        <App />
+    </SocketProvider>
   </StrictMode>,
 )

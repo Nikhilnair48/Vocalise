@@ -3,21 +3,26 @@ import { useNavigate } from "react-router-dom";
 import io from "socket.io-client";
 import "./index.css";
 
-const socket = io.connect("http://localhost:3000/chat");
-
 export const Onboarding = ({ setUserId }) => {
   const [username, setUsername] = useState("");
+  const [socket, setSocket] = useState(null);
   const navigate = useNavigate();
 
   const handleJoinChat = () => {
-    socket.emit("join_room", { username, room: "default" });
+    if (!socket) {
+      const newSocket = io.connect("http://localhost:3000/chat");
+      setSocket(newSocket);
 
-    socket.on("message", (data) => {
-      if (data.text.startsWith("Welcome to the chat room")) {
-        setUserId(data.userId);
-        navigate("/chatrooms");
-      }
-    });
+      newSocket.on("message", (data) => {
+        if (data.text.startsWith("Welcome to the chat room")) {
+          setUserId(data.userId);
+          navigate("/chatrooms");
+          newSocket.off("message");
+        }
+      });
+
+      newSocket.emit("join_room", { username, room: "default" });
+    }
   };
 
   return (
